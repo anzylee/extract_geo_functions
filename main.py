@@ -15,19 +15,22 @@ station_length = 40
 
 water_depth = 0.5
 
-method = 'const_slope' #'same_water_stage', 'same_vertical_offset', 'const_slope'
-    # For 'same_water_stage' and 'same_vertical_offset', two DEMs are required for 'path_terrains'
+"""
+method = 'const_slope' 
 method_param = [0.011770794, 0.246309559]
-    # For 'same_water_stage' and 'same_vertical_offset', method_param = ''
     # For 'const_slope', method_param = [slope, water depth at x=0]
-
 """
-method = 'vertical_offset' #'same_water_stage', 'same_vertical_offset', 'const_slope'
-    # For 'same_water_stage' and 'same_vertical_offset', two DEMs are required for 'path_terrains'
+"""
+method = 'vertical_offset' 
 method_param = 0.1
-    # For 'same_water_stage' and 'same_vertical_offset', method_param = ''
-    # For 'const_slope', method_param = [slope, water depth at x=0]
+    # For 'vertical_offset', method_param = vertical offset
 """
+
+method = 'max_width_diff'
+method_param = 14.68022043 # for SFE 24
+method_param = 5
+
+    # For 'max_width_diff', method_param = bankfull discharge (cms)
 
 figure_xsect = 1
 

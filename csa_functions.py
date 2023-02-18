@@ -193,7 +193,7 @@ def csa_functions(path_xsect, interval, path_terrains, ini_water_depth, min_elev
                                                                                               min_elev,
                                                                                               max_slope, modi_water_depth)
 
-            if method in ['vertical_offset']:
+            elif method in ['vertical_offset']:
 
                 x0, z0, width0, min_elevation0, water_stage0, x_intercept0 = width_calculator(xsectdf0, Line_ID,
                                                                                               min_elev,
@@ -202,6 +202,45 @@ def csa_functions(path_xsect, interval, path_terrains, ini_water_depth, min_elev
                 if Line_ID == min(Line_IDs):
                     min_elevation_y0 = min_elevation0
                 print(min_elevation0)
+
+            elif method in ['max_width_diff']:
+
+                water_depth = 0.01
+                water_depths, widths = [], []
+                x0, z0, width0, min_elevation0, water_stage0, x_intercept0 = width_calculator(xsectdf0, Line_ID,
+                                                                                              min_elev,
+                                                                                              max_slope, water_depth)
+
+                while len(x_intercept0) > 1:
+                    x0, z0, width0, min_elevation0, water_stage0, x_intercept0 = width_calculator(xsectdf0, Line_ID,
+                                                                                                  min_elev,
+                                                                                                  max_slope, water_depth)
+                    water_depths = np.append(water_depths, water_depth)
+                    widths = np.append(widths, width0)
+
+                    water_depth = water_depth + 0.01
+
+                if method_param > 0:
+                    scaling_w = 5.44 * pow(method_param, 0.477)
+                    lower_b = 0.5 * scaling_w
+                    upper_b = 2 * scaling_w
+
+                    ind_bounds = (widths>lower_b)*(widths<upper_b)
+                    widths = widths[ind_bounds]
+                    water_depths = water_depths[ind_bounds]
+
+                widths_diff = np.diff(widths)
+                widths_diff_ind = np.where(widths_diff == max(widths_diff))
+                water_depth = water_depths[widths_diff_ind[0][0]]
+
+                x0, z0, width0, min_elevation0, water_stage0, x_intercept0 = width_calculator(xsectdf0, Line_ID,
+                                                                                              min_elev,
+                                                                                              max_slope, water_depth)
+                print("Width = ", width0, "Lower/upper bounds = (", lower_b, ",", upper_b, ")")
+
+            else:
+                print("Enter a valid method name")
+
 
             plt.figure(1)
             plt.plot(x0, z0, '-')
@@ -238,6 +277,8 @@ def csa_functions(path_xsect, interval, path_terrains, ini_water_depth, min_elev
 
     return Line_IDs, bed_stage_width_df
 
+
+
 def width_calculator(xsectdf1, Line_ID, min_elev, max_slope, water_depth):
     # Construct a functional relationship between A and h
     x = np.array(xsectdf1.loc[xsectdf1['LINE_ID'] == Line_ID]['FIRST_DIST'])
@@ -259,6 +300,7 @@ def width_calculator(xsectdf1, Line_ID, min_elev, max_slope, water_depth):
 
     slope = np.diff(z) / np.diff(x)
     ind_diff = np.where(slope < -max_slope)
+
     if len(ind_diff[0]) > 0:
         x = np.delete(x, ind_diff[0] + 1)
         z = np.delete(z, ind_diff[0] + 1)
@@ -275,7 +317,7 @@ def width_calculator(xsectdf1, Line_ID, min_elev, max_slope, water_depth):
     # Calculate Width
 
     for ii in range(0, z.__len__() - 1):
-        if np.sign(z0[ii] * z0[ii + 1]) < 0:
+        if np.sign(z0[ii] * z0[ii + 1]) < 0.01:
             ind.append(ii)
 
     width = 0
