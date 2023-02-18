@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata xml:lang="en"><Esri><CreaDate>20230218</CreaDate><CreaTime>14351900</CreaTime><ArcGISFormat>1.0</ArcGISFormat><SyncOnce>TRUE</SyncOnce><DataProperties><lineage><Process ToolSource="c:\program files\arcgis\pro\Resources\ArcToolbox\toolboxes\3D Analyst Tools.tbx\StackProfile" Date="20230218" Time="143519">StackProfile ./sfe_82/Thalweg_5m_30m.shp ./sfe_82/sfe_82.asc .\sfe_82\xsect_table0.dbf #</Process></lineage></DataProperties></Esri></metadata>

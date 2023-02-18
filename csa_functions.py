@@ -205,7 +205,8 @@ def csa_functions(path_xsect, interval, path_terrains, ini_water_depth, min_elev
 
             elif method in ['max_width_diff']:
 
-                water_depth = 0.01
+                d_water_depth = 0.05
+                water_depth = d_water_depth
                 water_depths, widths = [], []
                 x0, z0, width0, min_elevation0, water_stage0, x_intercept0 = width_calculator(xsectdf0, Line_ID,
                                                                                               min_elev,
@@ -218,7 +219,10 @@ def csa_functions(path_xsect, interval, path_terrains, ini_water_depth, min_elev
                     water_depths = np.append(water_depths, water_depth)
                     widths = np.append(widths, width0)
 
-                    water_depth = water_depth + 0.01
+                    water_depth = water_depth + d_water_depth
+
+                widths = widths[:-5]
+                water_depths = water_depths[:-5]
 
                 if method_param > 0:
                     scaling_w = 5.44 * pow(method_param, 0.477)
@@ -228,8 +232,26 @@ def csa_functions(path_xsect, interval, path_terrains, ini_water_depth, min_elev
                     ind_bounds = (widths>lower_b)*(widths<upper_b)
                     widths = widths[ind_bounds]
                     water_depths = water_depths[ind_bounds]
+                else:
+                    lower_b = 0
+                    upper_b = 0
 
                 widths_diff = np.diff(widths)
+
+                plt.figure(11)
+                plt.plot(water_depths[:-1], widths_diff, '.')
+                plt.grid()
+                plt.xlabel('Water depth (m)')
+                plt.ylabel('Width difference (m)')
+
+                path_fig = os.path.dirname(terrain) + '/XS/width_diff_' + int_len_depth_method
+                if not os.path.exists(os.path.dirname(path_fig)):
+                    os.mkdir(os.path.dirname(path_fig))
+                if not os.path.exists(path_fig):
+                    os.mkdir(path_fig)
+                plt.savefig(path_fig + '/width_diff_' + str(Line_ID))
+                plt.close()
+
                 widths_diff_ind = np.where(widths_diff == max(widths_diff))
                 water_depth = water_depths[widths_diff_ind[0][0]]
 
@@ -265,9 +287,9 @@ def csa_functions(path_xsect, interval, path_terrains, ini_water_depth, min_elev
 
             #width_series = np.append(width_series, width)
             # worked for SFE 322
-            bed_stage_width_df.loc[max(Line_IDs) - Line_ID, 0] = min_elevation0
-            bed_stage_width_df.loc[max(Line_IDs) - Line_ID, 1] = water_stage0
-            bed_stage_width_df.loc[max(Line_IDs) - Line_ID, 2] = width0
+            bed_stage_width_df.loc[Line_ID, 0] = min_elevation0
+            bed_stage_width_df.loc[Line_ID, 1] = water_stage0
+            bed_stage_width_df.loc[Line_ID, 2] = width0
 
             '''
             bed_stage_width_df.loc[Line_ID, 0] = min_elevation0

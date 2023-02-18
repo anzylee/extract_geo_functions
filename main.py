@@ -4,14 +4,44 @@ import matplotlib.pyplot as plt
 import numpy as np
 from csa_functions import *
 
-case_name = 'sfe_tbs_M1_025'
-version = 'vv3'
-
 case_name = 'sfe_tbs_M1_024'
 version = 'vv3'
 
 interval = 5
 station_length = 40
+
+case_name = 'sfe_24'
+
+if case_name in ['sfe_24']:
+
+    version = ''
+
+    interval = 5
+    station_length = 40
+    method = 'max_width_diff'
+    method_param = 14.68022043 # for SFE 24
+    #method_param = 5
+elif case_name in ['sfe_322']:
+
+    version = ''
+
+    interval = 5
+    station_length = 100
+    method = 'max_width_diff'
+    method_param = 338
+    #method_param = 5
+elif case_name in ['sfe_82']:
+
+    version = ''
+
+    interval = 5
+    station_length = 30
+    method = 'max_width_diff'
+    method_param = 5.23
+    #method_param = 5
+
+else:
+    print('Case name not available')
 
 water_depth = 0.5
 
@@ -26,9 +56,7 @@ method_param = 0.1
     # For 'vertical_offset', method_param = vertical offset
 """
 
-method = 'max_width_diff'
-method_param = 14.68022043 # for SFE 24
-method_param = 5
+
 
     # For 'max_width_diff', method_param = bankfull discharge (cms)
 
@@ -45,8 +73,8 @@ case_name_v = case_name + '_' + version
 if version == '':
     int_len = str(interval) + 'm_' + str(station_length) + 'm'
     int_len_depth_method = str(interval) + 'm_' + str(station_length) + 'm_' + water_depth_str + 'm_' + method
-    path_xsect = './' + case_name + '/' + 'thalweg_' + int_len + '.shp'
-    path_terrains = ['./' + case_name + '/' + case_name + '.tif']
+    path_xsect = './' + case_name + '/' + 'Thalweg_' + int_len + '.shp'
+    path_terrains = ['./' + case_name + '/' + case_name + '.asc']
 
 else:
     int_len = str(interval)+'m_'+str(station_length)+'m'
