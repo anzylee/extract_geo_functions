@@ -205,7 +205,7 @@ def csa_functions(path_xsect, interval, path_terrains, ini_water_depth, min_elev
 
             elif method in ['max_width_diff']:
 
-                d_water_depth = 0.05
+                d_water_depth = 0.01
                 water_depth = d_water_depth
                 water_depths, widths = [], []
                 x0, z0, width0, min_elevation0, water_stage0, x_intercept0 = width_calculator(xsectdf0, Line_ID,
@@ -216,6 +216,8 @@ def csa_functions(path_xsect, interval, path_terrains, ini_water_depth, min_elev
                     x0, z0, width0, min_elevation0, water_stage0, x_intercept0 = width_calculator(xsectdf0, Line_ID,
                                                                                                   min_elev,
                                                                                                   max_slope, water_depth)
+
+
                     water_depths = np.append(water_depths, water_depth)
                     widths = np.append(widths, width0)
 
@@ -224,25 +226,57 @@ def csa_functions(path_xsect, interval, path_terrains, ini_water_depth, min_elev
                 widths = widths[:-5]
                 water_depths = water_depths[:-5]
 
-                if method_param > 0:
-                    scaling_w = 5.44 * pow(method_param, 0.477)
-                    lower_b = 0.5 * scaling_w
-                    upper_b = 2 * scaling_w
+                plt.figure(10)
+                plt.plot(water_depths, widths, 'k.')
 
-                    ind_bounds = (widths>lower_b)*(widths<upper_b)
+                if len(method_param) == 1:
+                    if method_param > 0:
+                        scaling_w = 5.44 * pow(method_param, 0.477)
+                        lower_b = 0.5 * scaling_w
+                        upper_b = 2 * scaling_w
+
+                        ind_bounds = (widths>lower_b)*(widths<upper_b)
+                        widths = widths[ind_bounds]
+                        water_depths = water_depths[ind_bounds]
+
+                    else:
+                        lower_b = 0
+                        upper_b = 0
+                elif len(method_param) == 2:
+                    lower_b = method_param[0]
+                    upper_b = method_param[1]
+
+                    ind_bounds = (widths > lower_b) * (widths < upper_b)
                     widths = widths[ind_bounds]
                     water_depths = water_depths[ind_bounds]
-                else:
-                    lower_b = 0
-                    upper_b = 0
 
                 widths_diff = np.diff(widths)
+                plt.figure(11)
+                plt.plot(water_depths[:-1], widths_diff, 'k.')
+
+                plt.figure(10)
+                plt.plot(water_depths, widths, 'b.')
+                #if lower_b > 0:
+                #    plt.plot([lower_b, lower_b], [min(widths_diff), max(widths_diff)], 'k--')
+                #    plt.plot([upper_b, upper_b], [min(widths_diff), max(widths_diff)], 'k--')
+                plt.grid()
+                plt.xlabel('Water depth (m)')
+                plt.ylabel('Width (m)')
+
+                path_fig = os.path.dirname(terrain) + '/XS/width_' + int_len_depth_method
+                if not os.path.exists(os.path.dirname(path_fig)):
+                    os.mkdir(os.path.dirname(path_fig))
+                if not os.path.exists(path_fig):
+                    os.mkdir(path_fig)
+                plt.savefig(path_fig + '/width_' + str(Line_ID))
+                plt.close()
 
                 plt.figure(11)
                 plt.plot(water_depths[:-1], widths_diff, '.')
+
                 plt.grid()
                 plt.xlabel('Water depth (m)')
-                plt.ylabel('Width difference (m)')
+                plt.ylabel('Width difference (m/0.01m)')
 
                 path_fig = os.path.dirname(terrain) + '/XS/width_diff_' + int_len_depth_method
                 if not os.path.exists(os.path.dirname(path_fig)):
@@ -327,6 +361,12 @@ def width_calculator(xsectdf1, Line_ID, min_elev, max_slope, water_depth):
         x = np.delete(x, ind_diff[0] + 1)
         z = np.delete(z, ind_diff[0] + 1)
 
+    xvals = np.arange(min(x), max(x), 0.1)
+    zinterp = np.interp(xvals, x, z)
+
+    x = xvals
+    z = zinterp
+
     min_elevation = min(z)  # np.sort(z)[1]
 
     water_stage = min_elevation + water_depth
@@ -344,7 +384,8 @@ def width_calculator(xsectdf1, Line_ID, min_elev, max_slope, water_depth):
 
     width = 0
 
-
+    #print(ind)
+    '''
     ## width = distance between the first & last intersect w/ water stage
     for ii in range(0, ind.__len__()):
         if len(ind) > 1:
@@ -358,7 +399,7 @@ def width_calculator(xsectdf1, Line_ID, min_elev, max_slope, water_depth):
 
         else:
             width = 0
-
+    '''
     '''
     ## width = summation of distances between the intersect w/ water stage
     for ii in range(0, ind.__len__(), 2):
@@ -380,4 +421,39 @@ def width_calculator(xsectdf1, Line_ID, min_elev, max_slope, water_depth):
         else:
             width = 0
     '''
+
+    ## width = maximum segment distance
+    dx_pre = 0
+
+    if len(ind) > 1 and np.mod(len(ind), 2) == 1: # if the number of intercept is odd
+        # ind = np.append(ind, ind[-1]+1)
+        ii = 0
+        if (z0[ind[ii]] - z0[ind[ii] + 1]) / (x[ind[ii]] - x[ind[ii] + 1]) > 0:
+            ind = ind[1:]  # if the slope of the first intercept is positive, remove the first intercept
+        else:
+            ind = ind[:-1]
+
+    for ii in range(0, ind.__len__(), 2):
+        if len(ind) > 1:
+            m1 = (z0[ind[ii]] - z0[ind[ii] + 1]) / (x[ind[ii]] - x[ind[ii] + 1])
+            xi1 = (-z0[ind[ii]] + m1 * x[ind[ii]]) / m1
+
+            m2 = (z0[ind[ii+1]] - z0[ind[ii+1] + 1]) / (x[ind[ii+1]] - x[ind[ii+1] + 1])
+            xi2 = (-z0[ind[ii+1]] + m2 * x[ind[ii+1]]) / m2
+
+            dx = xi2 - xi1
+
+            #width = width + dx
+            if dx > dx_pre:
+                width = dx
+            else:
+                width = dx_pre
+
+            x_intercept = np.append(x_intercept, xi1)
+            x_intercept = np.append(x_intercept, xi2)
+
+
+        else:
+            width = 0
+
     return x, z, width, min_elevation, water_stage, x_intercept
